@@ -1,0 +1,7 @@
+.nuxt
+.output
+.eslintrc
+nuxt.config.ts
+package.json
+tsconfig.json
+windi.config.ts

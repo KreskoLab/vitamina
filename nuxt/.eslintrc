@@ -1,0 +1,15 @@
+{
+	"parser": "vue-eslint-parser",
+	"parserOptions": { "parser": "@typescript-eslint/parser" },
+	"extends": ["plugin:@typescript-eslint/recommended", "plugin:vue/vue3-recommended", "prettier"],
+	"rules": {
+		"vue/no-unused-vars": "error",
+		"indent": "off",
+		"no-tabs": ["error", { "allowIndentationTabs": true }],
+		"vue/html-indent": ["error", "tab"], // enforce tabs in template,
+		"@typescript-eslint/indent": ["error", "tab"],
+		"vue/html-self-closing": 0,
+		"vue/multi-word-component-names": "off",
+		"semi": 0
+	}
+}
