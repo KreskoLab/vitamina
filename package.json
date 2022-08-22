@@ -1,6 +1,5 @@
 {
   "name": "vitamina",
-  "private": "true",
   "workspaces": [
     "nuxt",
     "strapi"
