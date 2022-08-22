@@ -15,5 +15,8 @@ export default ({ env }) => ({
   },
   'import-export-entries': {
     enabled: true,
+    config: {
+      serverPublicHostname: env('ADMIN_URL'),
+    },
   },
 });
