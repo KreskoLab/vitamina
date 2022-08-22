@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_prices_prices",
+  "info": {
+    "displayName": "prices",
+    "icon": "dollar-sign"
+  },
+  "options": {},
+  "attributes": {
+    "variants": {
+      "type": "json"
+    }
+  }
+}

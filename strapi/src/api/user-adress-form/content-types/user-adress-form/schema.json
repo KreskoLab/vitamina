@@ -1,0 +1,19 @@
+{
+  "kind": "singleType",
+  "collectionName": "user_adress_forms",
+  "info": {
+    "singularName": "user-adress-form",
+    "pluralName": "user-adress-forms",
+    "displayName": "User adress form",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "form": {
+      "type": "json"
+    }
+  }
+}

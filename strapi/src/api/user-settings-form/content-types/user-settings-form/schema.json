@@ -1,0 +1,19 @@
+{
+  "kind": "singleType",
+  "collectionName": "user_settings_forms",
+  "info": {
+    "singularName": "user-settings-form",
+    "pluralName": "user-settings-forms",
+    "displayName": "User settings form",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "form": {
+      "type": "json"
+    }
+  }
+}
