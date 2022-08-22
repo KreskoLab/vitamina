@@ -6,7 +6,7 @@
 		"vue/no-unused-vars": "error",
 		"indent": "off",
 		"no-tabs": ["error", { "allowIndentationTabs": true }],
-		"vue/html-indent": ["error", "tab"], // enforce tabs in template,
+		"vue/html-indent": ["error", "tab"],
 		"@typescript-eslint/indent": ["error", "tab"],
 		"vue/html-self-closing": 0,
 		"vue/multi-word-component-names": "off",
