@@ -1,44 +1,52 @@
 @font-face {
-  font-family: "Raleway";
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src: url("assets/fonts/Raleway-Light.ttf") format("truetype");
+	font-family: 'Rubik';
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url('assets/fonts/Rubik-Light.ttf') format('truetype');
 }
 
 @font-face {
-  font-family: "Raleway";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("assets/fonts/Raleway-Regular.ttf") format("truetype");
+	font-family: 'Rubik';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('assets/fonts/Rubik-Regular.ttf') format('truetype');
 }
 
 @font-face {
-  font-family: "Raleway";
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url("assets/fonts/Raleway-Italic.ttf") format("truetype");
+	font-family: 'Rubik';
+	font-style: italic;
+	font-weight: 400;
+	font-display: swap;
+	src: url('assets/fonts/Rubik-Italic.ttf') format('truetype');
 }
 
 @font-face {
-  font-family: "Raleway";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("assets/fonts/Raleway-Medium.ttf") format("truetype");
+	font-family: 'Rubik';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('assets/fonts/Rubik-Medium.ttf') format('truetype');
 }
 
 @font-face {
-  font-family: "Raleway";
-  font-style: italic;
-  font-weight: 500;
-  font-display: swap;
-  src: url("assets/fonts/Raleway-MediumItalic.ttf") format("truetype");
+	font-family: 'Rubik';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('assets/fonts/Rubik-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'Rubik';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('assets/fonts/Rubik-Bold.ttf') format('truetype');
 }
 
 html {
-  font-family: "Raleway" !important;
-  scroll-behavior: smooth;
+	font-family: 'Rubik';
+	scroll-behavior: smooth;
 }
