@@ -16,40 +16,83 @@ const sanitizeOutput = (user, ctx) => {
 };
 
 export default (plugin) => {
-  plugin.controllers.user['myOrder'] = async (ctx) => { 
+  plugin.controllers.user['myOrder'] = async (ctx) => {     
     const ordersService = strapi.services['api::order.order']
-    const orderId = ctx.request.query['orderId']
+    
+    const orderId = ctx.request.query['id']
+    const order = await ordersService.findOne(orderId)
+    
+    const customerEmail = order.userinfo.email
 
-    const hashString = `${process.env.MERCHANT_ACCOUNT};${orderId}`
-    const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
+    if (order.userinfo.payment === 'cash') {
+      await strapi.plugins['email'].services.email.send({
+        to: customerEmail,
+        from: process.env.EMAIL_FROM,
+        subject: `Замовлення ${orderId}`,
+        text: `Замовлення оброблюється`
+      })
 
-    hmac.update(hashString)
+      ctx.send('pending')
+    }
 
-    const hex = hmac.digest('hex')
-
-    const requestData = {
-      transactionType: 'CHECK_STATUS',
-      merchantAccount: process.env.MERCHANT_ACCOUNT,
-      orderReference: String(orderId),
-      merchantSignature: hex,
-      apiVersion: "1"
-    }        
-
-    try {
+    else {
+      const hashString = `${process.env.MERCHANT_ACCOUNT};${orderId}`
+      const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
+  
+      hmac.update(hashString)
+  
+      const hex = hmac.digest('hex')
+  
+      const requestData = {
+        transactionType: 'CHECK_STATUS',
+        merchantAccount: process.env.MERCHANT_ACCOUNT,
+        orderReference: String(orderId),
+        merchantSignature: hex,
+        apiVersion: "1"
+      }        
+  
       const res = await axios.post('https://api.wayforpay.com/api', JSON.stringify(requestData))  
-
+  
       if (res.data.reasonCode === 1100) {
         await ordersService.update(orderId, { data: { paid: true } })
+
+        await strapi.plugins['email'].services.email.send({
+          to: customerEmail,
+          from: process.env.EMAIL_FROM,
+          subject: `Замовлення ${orderId}`,
+          text: `Дякуємо за замовлення!`
+        })
+
         ctx.send('success')
       } else ctx.send('error')
-    } catch (error) {
-      console.log(error);
-      ctx.send('error')
     }
   }
 
   plugin.controllers.user['createOrder'] = async (ctx) => {
-    const { userSettings, cart } = ctx.request.body    
+    const { order, cart } = ctx.request.body    
+    
+    if (order.account) {
+      const userExist = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { email: order.email }
+      })
+
+      if (!userExist) {
+        await strapi.plugins['users-permissions'].services.user.add({
+          blocked: false,
+          confirmed: true, 
+          username: order.name + order.surname,
+          email: order.email,
+          name: order.name,
+          surname: order.surname,
+          phone: order.phone,
+          password: 'secretpassword',
+          provider: 'local',
+          created_by: 1,
+          updated_by: 1,
+          role: 1
+        });
+      }
+    }
 
     const ordersService = strapi.services['api::order.order']
 
@@ -72,58 +115,60 @@ export default (plugin) => {
       productCount.push(item.count)
     })
 
-    const order = await ordersService.create({ 
+    const newOrder = await ordersService.create({ 
       data: {
-        userinfo: [...userSettings],
+        userinfo: order,
         products: [...cart], 
         date: new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Kiev' }),
         publishedAt: new Date(),
       }
     })    
 
-    const orderDate = new Date(order.publishedAt).getTime()
+    if (order.payment === 'cash') {
+      ctx.send(newOrder.id)
+    }
 
-    const hashProductsNames = productName.map(item => `${item};`).join('')
-    const hashProductsCount = productCount.map(item => `${item};`).join('')  
-    const hashProductsPrices = productPrice.map(item => `${item};`).join('').slice(0, -1)
+    else {
+      const orderDate = new Date(newOrder.publishedAt).getTime()
 
-    const sum = productPrice.reduce((acc, cv, i) => acc + cv * productCount[i], 0)
+      const hashProductsNames = productName.map(item => `${item};`).join('')
+      const hashProductsCount = productCount.map(item => `${item};`).join('')  
+      const hashProductsPrices = productPrice.map(item => `${item};`).join('').slice(0, -1)
 
-    const hashString = `${process.env.MERCHANT_ACCOUNT};${process.env.MERCHANT_DOMAIN};${order.id};${orderDate};${sum};UAH;`
+      const sum = productPrice.reduce((acc, cv, i) => acc + cv * productCount[i], 0)
 
-    const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
-    hmac.update(hashString + hashProductsNames + hashProductsCount + hashProductsPrices)
+      const hashString = `${process.env.MERCHANT_ACCOUNT};${process.env.MERCHANT_DOMAIN};${newOrder.id};${orderDate};${sum};UAH;`
 
-    const hex = hmac.digest('hex')
+      const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
+      hmac.update(hashString + hashProductsNames + hashProductsCount + hashProductsPrices)
 
-    const requestData = {
-      merchantAccount: process.env.MERCHANT_ACCOUNT,
-      merchantDomainName: process.env.MERCHANT_DOMAIN,
-      merchantSignature: hex,
-      currency: "UAH",
-      amount: sum,
-      language: "UA",
-      returnUrl: `${process.env.MERCHANT_RETURN_URL}/order?orderId=${order.id}` ,
-      orderReference: String(order.id),
-      orderNo: String(order.id), 
-      orderDate: orderDate,
-      productName: productName,
-      productPrice: productPrice,
-      productCount: productCount,
-      clientEmail: userSettings.email || '',
-      clientPhone: userSettings.phone || '',
-      clientFirstName: userSettings.name || '',
-      clientLastName: userSettings.surname || ''
-    }    
+      const hex = hmac.digest('hex')
 
-    console.log(requestData);
-    
-    
-    try {
-      const res = await axios.post('https://secure.wayforpay.com/pay?behavior=offline', JSON.stringify(requestData))              
-      ctx.send(res.data.url);
-    } catch (error) {
-      ctx.send('error')
+      const requestData = {
+        merchantAccount: process.env.MERCHANT_ACCOUNT,
+        merchantDomainName: process.env.MERCHANT_DOMAIN,
+        merchantSignature: hex,
+        currency: "UAH",
+        amount: sum,
+        language: "UA",
+        returnUrl: `${process.env.MERCHANT_RETURN_URL}/order?orderId=${newOrder.id}` ,
+        orderReference: String(newOrder.id),
+        orderNo: String(newOrder.id), 
+        orderDate: orderDate,
+        productName: productName,
+        productPrice: productPrice,
+        productCount: productCount,
+        clientEmail: order.email || '',
+        clientPhone: order.phone || '',
+        clientFirstName: order.name || '',
+        clientLastName: order.surname || ''
+      }        
+          
+      const res = await axios.post('https://secure.wayforpay.com/pay?behavior=offline', JSON.stringify(requestData))          
+
+      if (res.data.url) {
+        ctx.send(res.data.url);
+      } else ctx.send('error');
     }
   }
 
