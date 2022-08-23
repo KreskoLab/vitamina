@@ -16,23 +16,13 @@ const sanitizeOutput = (user, ctx) => {
 };
 
 export default (plugin) => {
-  plugin.controllers.user['myOrder'] = async (ctx) => {
-    let user = await strapi.entityService.findOne(
-      'plugin::users-permissions.user',
-      ctx.state.user.id,
-      { populate: ['orders'] }
-    );
-      
-    if (!user) {
-      throw new NotFoundError(`User not found`);
-    }
-    
+  plugin.controllers.user['myOrder'] = async (ctx) => { 
     const ordersService = strapi.services['api::order.order']
-    const userLastOrder = user.orders.length ? user.orders[user.orders.length - 1] : {};
+    const orderId = ctx.request.query['orderId']
 
-    const hashString = `${process.env.MERCHANT_ACCOUNT};${userLastOrder.id}`
-
+    const hashString = `${process.env.MERCHANT_ACCOUNT};${orderId}`
     const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
+
     hmac.update(hashString)
 
     const hex = hmac.digest('hex')
@@ -40,7 +30,7 @@ export default (plugin) => {
     const requestData = {
       transactionType: 'CHECK_STATUS',
       merchantAccount: process.env.MERCHANT_ACCOUNT,
-      orderReference: String(userLastOrder.id),
+      orderReference: String(orderId),
       merchantSignature: hex,
       apiVersion: "1"
     }        
@@ -49,60 +39,42 @@ export default (plugin) => {
       const res = await axios.post('https://api.wayforpay.com/api', JSON.stringify(requestData))  
 
       if (res.data.reasonCode === 1100) {
-        await ordersService.update(userLastOrder.id, { data: { paid: true } })
-        user = await getService('user').edit(user.id, { cart: [] });
-      }
-      
-      ctx.send(user);
+        await ordersService.update(orderId, { data: { paid: true } })
+        ctx.send('success')
+      } else ctx.send('error')
     } catch (error) {
       console.log(error);
-      ctx.send(user)
+      ctx.send('error')
     }
   }
 
   plugin.controllers.user['createOrder'] = async (ctx) => {
-    const user = await strapi.entityService.findOne(
-      'plugin::users-permissions.user',
-      ctx.state.user.id,
-      { populate: ['orders'] }
-    );
-      
-    if (!user) {
-      throw new NotFoundError(`User not found`);
-    }
+    const { userSettings, cart } = ctx.request.body    
 
     const ordersService = strapi.services['api::order.order']
-    const productsService = strapi.services['api::product.product']
 
-    const userCart = user.cart
-    const cartProductsIds = userCart.map(item => item.id)
+    const cartProductsIds = cart.map(item => item.id)
 
-    const { results } = await productsService.find()
+    const results = await strapi.entityService.findMany('api::product.product', { populate: '*' })
+    
     const products = results.filter(item => cartProductsIds.includes(item.id))    
 
     const productName = []
     const productPrice = []
     const productCount = []
 
-    userCart.forEach(item => {
-      const name = `${products.find(product => product.id === item.id).name} (${item.variant})`
+    cart.forEach(item => {
+      const name = `${products.find(product => product.id === item.id).name} (${item.weight})`
+      const price = products.find(product => product.id === item.id).prices[0].variants.find(variant => variant.weight === item.weight).price
 
       productName.push(name)
-      productPrice.push(item.price)
+      productPrice.push(price)
       productCount.push(item.count)
     })
 
-    const sum = userCart.map(item => item.price * item.count).reduce((acc, cv) => acc + cv, 0)    
-    const userLastOrder = user.orders.length ? user.orders[user.orders.length - 1] : {};
-        
-    if (userLastOrder.paid === false) {      
-      await ordersService.delete(userLastOrder.id)
-      user.orders.pop()
-    }    
-
     const order = await ordersService.create({ 
       data: {
-        products: [...userCart], 
+        products: [...cart], 
         date: new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Kiev' }),
         publishedAt: new Date(),
       }
@@ -114,18 +86,14 @@ export default (plugin) => {
     const hashProductsCount = productCount.map(item => `${item};`).join('')  
     const hashProductsPrices = productPrice.map(item => `${item};`).join('').slice(0, -1)
 
+    const sum = productPrice.reduce((acc, cv, i) => acc + cv * productCount[i], 0)
+
     const hashString = `${process.env.MERCHANT_ACCOUNT};${process.env.MERCHANT_DOMAIN};${order.id};${orderDate};${sum};UAH;`
 
     const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
     hmac.update(hashString + hashProductsNames + hashProductsCount + hashProductsPrices)
 
     const hex = hmac.digest('hex')
-
-    const userOrders = user.orders || []
-    userOrders.push(order.id)    
-
-    const data = await getService('user').edit(user.id, { orders: userOrders });
-    await sanitizeOutput(data, ctx);    
 
     const requestData = {
       merchantAccount: process.env.MERCHANT_ACCOUNT,
@@ -134,21 +102,21 @@ export default (plugin) => {
       currency: "UAH",
       amount: sum,
       language: "UA",
-      returnUrl: process.env.MERCHANT_RETURN_URL,
+      returnUrl: `${process.env.MERCHANT_RETURN_URL}/order?orderId=${order.id}` ,
       orderReference: String(order.id),
       orderNo: String(order.id), 
       orderDate: orderDate,
       productName: productName,
       productPrice: productPrice,
       productCount: productCount,
-      clientEmail: user.email || '',
-      clientPhone: user.phone || '',
-      clientFirstName: user.name || '',
-      clientLastName: user.surname || ''
-    }        
-
+      clientEmail: userSettings.email || '',
+      clientPhone: userSettings.phone || '',
+      clientFirstName: userSettings.name || '',
+      clientLastName: userSettings.surname || ''
+    }    
+    
     try {
-      const res = await axios.post('https://secure.wayforpay.com/pay?behavior=offline', JSON.stringify(requestData))  
+      const res = await axios.post('https://secure.wayforpay.com/pay?behavior=offline', JSON.stringify(requestData))              
       ctx.send(res.data.url);
     } catch (error) {
       ctx.send('error')
