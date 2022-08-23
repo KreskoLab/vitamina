@@ -74,6 +74,7 @@ export default (plugin) => {
 
     const order = await ordersService.create({ 
       data: {
+        userinfo: [...userSettings],
         products: [...cart], 
         date: new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Kiev' }),
         publishedAt: new Date(),
@@ -114,6 +115,9 @@ export default (plugin) => {
       clientFirstName: userSettings.name || '',
       clientLastName: userSettings.surname || ''
     }    
+
+    console.log(requestData);
+    
     
     try {
       const res = await axios.post('https://secure.wayforpay.com/pay?behavior=offline', JSON.stringify(requestData))              

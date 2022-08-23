@@ -21,6 +21,9 @@
     },
     "date": {
       "type": "string"
+    },
+    "userinfo": {
+      "type": "json"
     }
   }
 }
