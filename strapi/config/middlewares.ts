@@ -12,7 +12,7 @@ export default [
     config: {
       enabled: true,
       headers: ["Content-Type", "Authorization", "Origin", "Accept"],
-      origin: process.env.MERCHANT_RETURN_URL
+      origin: [process.env.MERCHANT_RETURN_URL, process.env.ADMIN_URL]
     }
   },
   {
