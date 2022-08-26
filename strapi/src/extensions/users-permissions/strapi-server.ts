@@ -15,6 +15,22 @@ const sanitizeOutput = (user, ctx) => {
   return sanitize.contentAPI.output(user, schema, { auth });
 };
 
+function hashMerchantSecret(hashString: string): string {
+  const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
+  hmac.update(hashString)
+
+  return hmac.digest('hex')
+}
+
+async function sendEmial(to: string, subject: string, text: string) {
+  await strapi.plugins['email'].services.email.send({
+    from: process.env.EMAIL_FROM,
+    to,
+    subject,
+    text
+  })
+}
+
 export default (plugin) => {
   plugin.controllers.user['myOrder'] = async (ctx) => {     
     const ordersService = strapi.services['api::order.order']
@@ -25,29 +41,18 @@ export default (plugin) => {
     const customerEmail = order.userinfo.email
 
     if (order.userinfo.payment === 'cash') {
-      await strapi.plugins['email'].services.email.send({
-        to: customerEmail,
-        from: process.env.EMAIL_FROM,
-        subject: `Замовлення ${orderId}`,
-        text: `Замовлення оброблюється`
-      })
-
+      await sendEmial(customerEmail, `Замовлення ${orderId}`, process.env.EMAIL_TEXT)
       ctx.send('pending')
     }
 
     else {
       const hashString = `${process.env.MERCHANT_ACCOUNT};${orderId}`
-      const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
-  
-      hmac.update(hashString)
-  
-      const hex = hmac.digest('hex')
   
       const requestData = {
         transactionType: 'CHECK_STATUS',
         merchantAccount: process.env.MERCHANT_ACCOUNT,
         orderReference: String(orderId),
-        merchantSignature: hex,
+        merchantSignature: hashMerchantSecret(hashString),
         apiVersion: "1"
       }        
   
@@ -55,13 +60,7 @@ export default (plugin) => {
   
       if (res.data.reasonCode === 1100) {
         await ordersService.update(orderId, { data: { paid: true } })
-
-        await strapi.plugins['email'].services.email.send({
-          to: customerEmail,
-          from: process.env.EMAIL_FROM,
-          subject: `Замовлення ${orderId}`,
-          text: `Дякуємо за замовлення!`
-        })
+        await sendEmial(customerEmail, `Замовлення ${orderId}`, process.env.EMAIL_TEXT)
 
         ctx.send('success')
       } else ctx.send('error')
@@ -70,11 +69,11 @@ export default (plugin) => {
 
   plugin.controllers.user['createOrder'] = async (ctx) => {
     const { order, cart } = ctx.request.body    
-    
+        
     if (order.account) {
       const userExist = await strapi.db.query('plugin::users-permissions.user').findOne({
         where: { email: order.email }
-      })
+      })      
 
       if (!userExist) {
         await strapi.plugins['users-permissions'].services.user.add({
@@ -91,7 +90,15 @@ export default (plugin) => {
           updated_by: 1,
           role: 1
         });
-      }
+
+        const helloMsg = `
+          Вітаємо в родині Вітамінерія!
+          Ваш акаунт ${order.email}
+          Приємних покупок!
+        `
+
+        await sendEmial(order.email, 'Реєстрація', helloMsg)
+      } else ctx.send('error');
     }
 
     const ordersService = strapi.services['api::order.order']
@@ -138,20 +145,16 @@ export default (plugin) => {
       const sum = productPrice.reduce((acc, cv, i) => acc + cv * productCount[i], 0)
 
       const hashString = `${process.env.MERCHANT_ACCOUNT};${process.env.MERCHANT_DOMAIN};${newOrder.id};${orderDate};${sum};UAH;`
-
-      const hmac = createHmac('md5', process.env.MERCHANT_SECRET)
-      hmac.update(hashString + hashProductsNames + hashProductsCount + hashProductsPrices)
-
-      const hex = hmac.digest('hex')
+      const hex = hashString + hashProductsNames + hashProductsCount + hashProductsPrices
 
       const requestData = {
         merchantAccount: process.env.MERCHANT_ACCOUNT,
         merchantDomainName: process.env.MERCHANT_DOMAIN,
-        merchantSignature: hex,
+        merchantSignature: hashMerchantSecret(hex),
         currency: "UAH",
         amount: sum,
         language: "UA",
-        returnUrl: `${process.env.MERCHANT_RETURN_URL}/order?orderId=${newOrder.id}` ,
+        returnUrl: `${process.env.MERCHANT_RETURN_URL}/order?id=${newOrder.id}` ,
         orderReference: String(newOrder.id),
         orderNo: String(newOrder.id), 
         orderDate: orderDate,
