@@ -118,6 +118,15 @@
         }
       },
       "type": "richtext"
+    },
+    "in_stock": {
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "type": "boolean",
+      "default": true
     }
   }
 }
