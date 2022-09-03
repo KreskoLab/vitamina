@@ -4,6 +4,7 @@ import { createHmac } from 'crypto'
 import utils from '@strapi/utils';
 import axios from 'axios'
 import _ from 'lodash';
+import product from '../../api/product/controllers/product';
 
 const { sanitize } = utils;
 const { ApplicationError, NotFoundError } = utils.errors;
@@ -43,6 +44,16 @@ export default (plugin) => {
     else {
       const orders = await strapi.entityService.findMany('api::order.order')
       const userOrders = orders.filter(order => order.userinfo.email === user.email) || []
+
+      if (userOrders.length) {
+        const products = await strapi.entityService.findMany('api::product.product')
+        const userOrdersProductsIds = userOrders.products.map(product => product.id)
+
+        userOrders.forEach((order, i, arr) => {
+          const productsNames = products.filter(product => userOrdersProductsIds.includes(product.id)).name
+          arr[i].products = order.products.map(product => ({ ...product, name: productsNames[i] }))
+        })
+      }
 
       ctx.send(userOrders)
     }
