@@ -49,6 +49,9 @@ export default (plugin) => {
         const products = await strapi.entityService.findMany('api::product.product')
         const userOrdersProductsIds = userOrders.products.map(product => product.id)
 
+        console.log(userOrdersProductsIds);
+        
+
         userOrders.forEach((order, i, arr) => {
           const productsNames = products.filter(product => userOrdersProductsIds.includes(product.id)).name
           arr[i].products = order.products.map(product => ({ ...product, name: productsNames[i] }))
