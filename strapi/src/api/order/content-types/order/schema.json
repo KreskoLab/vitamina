@@ -24,6 +24,15 @@
     },
     "userinfo": {
       "type": "json"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "done",
+        "canceled"
+      ],
+      "default": "pending"
     }
   }
 }
