@@ -50,7 +50,7 @@ export default (plugin) => {
         const userOrdersProductsIds = userOrders.map(order => order.products.map(product => product.id))        
 
         userOrders.forEach((order, i, arr) => {
-          const productsNames = products.filter(product => userOrdersProductsIds.includes(product.id)).name
+          const productsNames = products.filter(product => userOrdersProductsIds.includes(product.id)).map(item => item.name)
           arr[i].products = order.products.map(product => ({ ...product, name: productsNames[i] }))
         })
       }
