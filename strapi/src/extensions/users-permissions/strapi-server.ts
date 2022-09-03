@@ -156,12 +156,15 @@ export default (plugin) => {
       productCount.push(item.count)
     })
 
+    const sum = productPrice.reduce((acc, cv, i) => acc + cv * productCount[i], 0)
+
     const newOrder = await ordersService.create({ 
       data: {
         userinfo: order,
         products: [...cart], 
         date: new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Kiev' }),
         publishedAt: new Date(),
+        sum: sum
       }
     })    
 
@@ -175,8 +178,6 @@ export default (plugin) => {
       const hashProductsNames = productName.map(item => `${item};`).join('')
       const hashProductsCount = productCount.map(item => `${item};`).join('')  
       const hashProductsPrices = productPrice.map(item => `${item};`).join('').slice(0, -1)
-
-      const sum = productPrice.reduce((acc, cv, i) => acc + cv * productCount[i], 0)
 
       const hashString = `${process.env.MERCHANT_ACCOUNT};${process.env.MERCHANT_DOMAIN};${newOrder.id};${orderDate};${sum};UAH;`
       const hex = hashString + hashProductsNames + hashProductsCount + hashProductsPrices
