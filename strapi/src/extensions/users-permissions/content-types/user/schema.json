@@ -63,9 +63,6 @@
       "inversedBy": "users",
       "configurable": false
     },
-    "filled": {
-      "type": "boolean"
-    },
     "phone": {
       "type": "string",
       "unique": true,
@@ -86,12 +83,6 @@
       "type": "string"
     },
     "city": {
-      "type": "string"
-    },
-    "adress": {
-      "type": "string"
-    },
-    "adress2": {
       "type": "string"
     },
     "postcode": {
