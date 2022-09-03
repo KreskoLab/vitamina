@@ -69,6 +69,21 @@ export default (plugin) => {
 
   plugin.controllers.user['createOrder'] = async (ctx) => {
     const { order, cart } = ctx.request.body    
+    const { id } = ctx.state.user;
+
+    if (id && (order.post.name === 'novaposhta' || order.post.name === 'ukrposhta')) {
+      const body = {
+        postcode: order.postcode || '',
+        city: order.city || '',
+        region: order.region || ''
+      }
+
+      const user = await getService('user').fetch(id);
+
+      if (!user) {
+        throw new NotFoundError(`User not found`);
+      } else await getService('user').edit(id, body);
+    }
         
     if (order.account) {
       const userExist = await strapi.db.query('plugin::users-permissions.user').findOne({
@@ -179,7 +194,6 @@ export default (plugin) => {
   }
 
   plugin.controllers.user['updateMe'] = async (ctx) => {    
-    
     const advancedConfigs = await strapi
       .store({ type: 'plugin', name: 'users-permissions', key: 'advanced' })
       .get();
