@@ -51,6 +51,8 @@ export default (plugin) => {
 
         userOrders.forEach((order, i, arr) => {
           const productsNames = products.filter(product => userOrdersProductsIds.includes(product.id)).map(item => item.name)
+          console.log(productsNames);
+          
           arr[i].products = order.products.map(product => ({ ...product, name: productsNames[i] }))
         })
       }
