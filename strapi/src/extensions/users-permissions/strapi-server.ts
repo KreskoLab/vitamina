@@ -32,6 +32,22 @@ async function sendEmial(to: string, subject: string, text: string) {
 }
 
 export default (plugin) => {
+  plugin.controllers.user['myOrders'] = async (ctx) => {  
+    const { id } = ctx.state.user;
+    const user = await getService('user').fetch(id);
+
+    if (!user) {
+      throw new NotFoundError(`User not found`);
+    }
+
+    else {
+      const orders = await strapi.entityService.findMany('api::order.order')
+      const userOrders = orders.filter(order => order.userinfo.email === user.email) || []
+
+      ctx.send(userOrders)
+    }
+  }
+
   plugin.controllers.user['myOrder'] = async (ctx) => {     
     const ordersService = strapi.services['api::order.order']
     
@@ -254,6 +270,15 @@ export default (plugin) => {
       method: 'GET',
       path: '/me/order',
       handler: 'user.myOrder',
+      config: {
+        policies: [],
+        prefix: '',
+      }
+    },
+    {
+      method: 'GET',
+      path: '/me/orders',
+      handler: 'user.myOrders',
       config: {
         policies: [],
         prefix: '',
