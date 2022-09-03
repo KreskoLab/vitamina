@@ -46,11 +46,10 @@ export default (plugin) => {
       const userOrders = orders.filter(order => order.userinfo.email === user.email) || []
 
       if (userOrders.length) {
-        const products = await strapi.entityService.findMany('api::product.product')
-        const userOrdersProductsIds = userOrders.products.map(product => product.id)
+        const products = await strapi.entityService.findMany('api::product.product', { populate: '*' })
+        console.log(products);
 
-        console.log(userOrdersProductsIds);
-        
+        const userOrdersProductsIds = userOrders.products.map(product => product.id)        
 
         userOrders.forEach((order, i, arr) => {
           const productsNames = products.filter(product => userOrdersProductsIds.includes(product.id)).name
