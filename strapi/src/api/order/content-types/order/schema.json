@@ -33,6 +33,10 @@
         "canceled"
       ],
       "default": "pending"
+    },
+    "sum": {
+      "type": "decimal",
+      "default": 0
     }
   }
 }
