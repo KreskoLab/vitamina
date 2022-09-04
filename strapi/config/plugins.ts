@@ -31,4 +31,12 @@ export default ({ env }) => ({
       },
     },
   },
+  sitemap: {
+    enabled: true,
+    config: {
+      autoGenerate: true,
+      allowedFields: ['id', 'uid', 'string', 'relation'],
+      excludedTypes: [],
+    },
+  },
 });
