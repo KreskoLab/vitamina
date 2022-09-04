@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_prices_seos",
+  "info": {
+    "displayName": "seo",
+    "icon": "align-left"
+  },
+  "options": {},
+  "attributes": {
+    "description": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "string"
+    }
+  }
+}

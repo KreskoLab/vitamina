@@ -54,16 +54,6 @@
       "minLength": 1,
       "maxLength": 120
     },
-    "description": {
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 512
-    },
     "color": {
       "pluginOptions": {
         "i18n": {
@@ -76,6 +66,16 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::subcategory.subcategory"
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "component": "prices.seo"
     }
   }
 }
