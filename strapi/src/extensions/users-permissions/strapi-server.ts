@@ -99,7 +99,12 @@ export default (plugin) => {
     const { order, cart } = ctx.request.body    
     const { id } = ctx.state.user;
 
+    console.log(id);
+    
+
     if (id && (order.post.name === 'novaposhta' || order.post.name === 'ukrposhta')) {
+      console.log('qq');
+      
       const body = {
         postcode: order.postcode || '',
         city: order.city || '',
