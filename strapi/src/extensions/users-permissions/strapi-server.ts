@@ -97,14 +97,11 @@ export default (plugin) => {
 
   plugin.controllers.user['createOrder'] = async (ctx) => {
     const { order, cart } = ctx.request.body    
-    const { id } = ctx.state.user;
-
-    console.log(id);
     
+    try {
+      const { id } = ctx.state.user;    
 
-    if (id && (order.post.name === 'novaposhta' || order.post.name === 'ukrposhta')) {
-      console.log('qq');
-      
+    if (id && (order.post.name === 'novaposhta' || order.post.name === 'ukrposhta')) {      
       const body = {
         postcode: order.postcode || '',
         city: order.city || '',
@@ -116,6 +113,9 @@ export default (plugin) => {
       if (!user) {
         throw new NotFoundError(`User not found`);
       } else await getService('user').edit(id, body);
+    }
+    } catch (error) {
+      console.log(error);
     }
         
     if (order.account) {
