@@ -27,6 +27,10 @@
       "type": "component",
       "repeatable": true,
       "component": "prices.seo"
+    },
+    "priority": {
+      "type": "integer",
+      "default": 0
     }
   }
 }
