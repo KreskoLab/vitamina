@@ -119,15 +119,6 @@
       },
       "type": "richtext"
     },
-    "in_stock": {
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "type": "boolean",
-      "default": true
-    },
     "cover": {
       "type": "media",
       "multiple": false,
@@ -151,6 +142,23 @@
         }
       },
       "component": "prices.seo"
+    },
+    "message": {
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "type": "string"
+    },
+    "in_stock": {
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "type": "boolean",
+      "default": true
     }
   }
 }
