@@ -4,7 +4,6 @@ import { createHmac } from 'crypto'
 import utils from '@strapi/utils';
 import axios from 'axios'
 import _ from 'lodash';
-import product from '../../api/product/controllers/product';
 
 const { sanitize } = utils;
 const { ApplicationError, NotFoundError } = utils.errors;
@@ -68,7 +67,7 @@ export default (plugin) => {
     
     const customerEmail = order.userinfo.email
 
-    if (order.userinfo.payment === 'cash') {
+    if (order.userinfo.payment === 'cash' || order.userinfo.payment === 'card') {
       await sendEmial(customerEmail, `Замовлення ${orderId}`, process.env.EMAIL_TEXT)
       ctx.send('pending')
     }
@@ -83,6 +82,12 @@ export default (plugin) => {
         merchantSignature: hashMerchantSecret(hashString),
         apiVersion: "1"
       }        
+
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve('ok')
+        }, 2000);
+      })
   
       const res = await axios.post('https://api.wayforpay.com/api', JSON.stringify(requestData))  
   
@@ -185,7 +190,7 @@ export default (plugin) => {
       }
     })    
 
-    if (order.payment === 'cash') {
+    if (order.payment === 'cash' || order.payment === 'card') {
       ctx.send(newOrder.id)
     }
 
