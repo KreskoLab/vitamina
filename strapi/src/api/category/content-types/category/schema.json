@@ -76,6 +76,15 @@
         }
       },
       "component": "prices.seo"
+    },
+    "priority": {
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "type": "integer",
+      "default": 0
     }
   }
 }
